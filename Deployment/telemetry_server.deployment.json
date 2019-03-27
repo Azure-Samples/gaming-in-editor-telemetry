@@ -1,0 +1,305 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "cosmosDBAccountName": {
+            "type": "string",
+			"metadata": {
+                "description": "Name of the Azure Cosmos DB Account - must be all lower case and between 3-31 "
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "eventHubNamespaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Azure Event Hub namespace"
+            }
+        },
+        "eventHubSKU": {
+            "type": "string",
+            "allowedValues": ["Basic", "Standard"],
+            "defaultValue": "Standard",
+            "metadata": {
+                "description": "The messaging tier for the Azure Service Bus namespace"
+            }
+        },
+        "eventHubSKUCapacity": {
+            "type": "int",
+            "allowedValues": [1, 2, 4],
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Azure Event Hub MessagingUnits for the premium namespace"
+            }
+        },
+        "eventHubName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Azure Event Hub"
+            }
+        },
+        "consumerGroupName": {
+            "type": "string",
+            "defaultValue": "$Default",
+            "metadata": {
+                "description": "Name of the consumer group for the event hub that the ingestion function will consume."
+            }
+        },
+        "messageRetentionInDays": {
+            "type": "int",
+            "defaultValue": 1,
+            "minValue": 1,
+            "maxValue": 7,
+            "metadata": {
+              "description": "How long to retain the original data in the Event Hub."
+            }
+        },
+        "partitionCount": {
+            "type": "int",
+            "defaultValue": 4,
+            "minValue": 2,
+            "maxValue": 32,
+            "metadata": {
+              "description": "Number of partitions chosen"
+            }
+        },
+        "functionAppName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Azure Function app that you wish to create."
+            }
+        },
+        "storageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": ["Standard_LRS", "Standard_GRS", "Standard_RAGRS"],
+            "metadata": {
+                "description": "Storage Account type for the Azure Functions data."
+            }
+        },
+        "functionAppRuntime": {
+            "type": "string",
+            "defaultValue": "dotnet",
+            "metadata": {
+                "description": "The language worker runtime to load in the Azure Function App."
+            }
+        },
+        "telemetryDatabaseName": {
+            "type": "string",
+            "defaultValue": "TelemetryDB",
+            "metadata": {
+                "description": "The name of the database which holds the collection of telemetry events in Cosmos DB."
+            }
+        },
+        "telemetryCollectionName": {
+            "type": "string",
+            "defaultValue": "MyGame",
+            "metadata": {
+                "description": "The name of the Cosmos DB collection which will contain the telemetry events."
+            }
+        }
+    },
+    "variables": {
+        "cosmosAccountName": "[tolower(parameters('cosmosDBAccountName'))]",
+        "functionName": "[parameters('functionAppName')]",
+        "hostingPlanName": "[parameters('functionAppName')]",
+        "cosmosResourceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDBAccountName'))]",
+        "cosmosApiVersion": "[providers('Microsoft.DocumentDB', 'databaseAccounts').apiVersions[0]]",
+        "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
+        "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "functionWorkerRuntime": "[parameters('functionAppRuntime')]",
+        "defaultSASKeyName": "RootManageSharedAccessKey",
+        "authRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName'))]"
+
+    },
+    "resources": [{
+            "apiVersion": "2015-04-08",
+            "kind": "GlobalDocumentDB",
+            "type": "Microsoft.DocumentDB/databaseAccounts",
+            "name": "[variables('cosmosAccountName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "databaseAccountOfferType": "Standard",
+                "locations": [{
+                    "id": "[concat(parameters('cosmosDBAccountName'), '-', parameters('location'))]",
+                    "failoverPriority": 0,
+                    "locationName": "[parameters('location')]"
+                }],
+                "enableMultipleWriteLocations": false,
+                "isVirtualNetworkFilterEnabled": false,
+                "virtualNetworkRules": [],
+                "ipRangeFilter": "",
+                "dependsOn": []
+            },
+            "tags": {}
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "name": "[parameters('eventHubNamespaceName')]",
+            "type": "Microsoft.EventHub/namespaces",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('eventHubSKU')]",
+                "tier": "[parameters('eventHubSKU')]",
+                "capacity": "[parameters('eventHubSKUCapacity')]"
+            },
+            "tags": {},
+            "properties": {},
+            "resources": [{
+                "apiVersion": "2017-04-01",
+                "name": "[parameters('eventHubName')]",
+                "type": "eventhubs",
+                "dependsOn": [
+                    "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]"
+                ],
+                "properties": {
+                    "messageRetentionInDays": "[parameters('messageRetentionInDays')]",
+                    "partitionCount": "[parameters('partitionCount')]"
+                },
+                "resources": [{
+                    "apiVersion": "2017-04-01",
+                    "name": "[parameters('consumerGroupName')]",
+                    "type": "consumergroups",
+                    "dependsOn": ["[parameters('eventHubName')]"],
+                    "properties": {
+                        "userMetadata": "User Metadata goes here"
+                    }
+                }]
+            }]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2016-12-01",
+            "location": "[parameters('location')]",
+            "kind": "Storage",
+            "sku": {
+                "name": "[parameters('storageAccountType')]"
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2015-04-01",
+            "name": "[variables('hostingPlanName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "computeMode": "Dynamic",
+                "sku": "Dynamic"
+            }
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "type": "Microsoft.Web/sites",
+            "name": "[variables('functionName')]",
+            "location": "[parameters('location')]",
+            "kind": "functionapp",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]"
+            ],
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "siteConfig": {
+                    "appSettings": [{
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[toLower(variables('functionName'))]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~2"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "8.11.1"
+                        },
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": ""
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "[variables('functionWorkerRuntime')]"
+                        },
+                        {
+                            "name": "EhConnString",
+                            "value": "[concat(listkeys(variables('authRuleResourceId'), '2017-04-01').primaryConnectionString, ';', 'EntityPath=', parameters('eventHubName'))]"
+                        },
+                        {
+                            "name": "ConsumerGroup",
+                            "value": "[parameters('consumerGroupName')]"
+                        },
+						{
+                            "name": "EventHubIngest",
+                            "value": "true"
+                        },
+						{
+                            "name": "CosmosUpload",
+                            "value": "true"
+                        },
+                        {
+                            "name": "CosmosDbUri",
+                            "value": "[reference(variables('cosmosResourceId'), variables('cosmosApiVersion')).documentEndpoint]"
+                        },
+                        {
+                            "name": "CosmosDbAuthKey",
+                            "value": "[listKeys(variables('cosmosResourceId'), variables('cosmosApiVersion')).primaryMasterKey]"
+                        },
+                        {
+                            "name": "CosmosDatabaseId",
+                            "value": "[parameters('telemetryDatabaseName')]"
+                        },
+                        {
+                            "name": "CosmosDataCollection",
+                            "value": "[parameters('telemetryCollectionName')]"
+                        },
+						{
+                            "name": "CosmosDbConnectionString",
+                            "value": "[concat('AccountEndpoint=https://', parameters('cosmosDBAccountName'), '.documents.azure.com:443/;AccountKey=', listKeys(variables('cosmosResourceId'), variables('cosmosApiVersion')).primaryMasterKey, ';')]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "EventHubConnectionString": {
+            "type": "string",
+            "value": "[concat(listkeys(variables('authRuleResourceId'), '2017-04-01').primaryConnectionString, ';', 'EntityPath=', parameters('eventHubName'))]"
+        },
+        "SharedAccessPolicyPrimaryKey": {
+            "type": "string",
+            "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryKey]"
+        },
+        "documentEndpoint": {
+            "type": "string",
+            "value": "[reference(variables('cosmosResourceId'), variables('cosmosApiVersion')).documentEndpoint]"
+        },
+        "accountKey": {
+            "type": "string",
+            "value": "[listKeys(variables('cosmosResourceId'), variables('cosmosApiVersion')).primaryMasterKey]"
+        },
+        "cosmosConnectionString": {
+            "type": "string",
+            "value": "[concat('AccountEndpoint=https://', parameters('cosmosDBAccountName'), '.documents.azure.com:443/;AccountKey=', listKeys(variables('cosmosResourceId'), variables('cosmosApiVersion')).primaryMasterKey, ';')]"
+        }
+    }
+}
