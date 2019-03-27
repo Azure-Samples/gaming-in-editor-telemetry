@@ -1,3 +1,15 @@
+---
+topic: sample
+languages:
+  - csharp
+products:
+  - azure
+  - azure-event-hubs
+  - azure-functions
+  - azure-cosmos-db
+azureDeploy: https://raw.githubusercontent.com/Azure-Samples/gaming-in-editor-telemetry/master/Deployment/telemetry_server.deployment.json
+---
+
 <link rel="stylesheet" type="text/css" media="all" href="Documentation/style/styles.css" />
 
 # Introduction 
