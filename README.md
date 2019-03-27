@@ -29,10 +29,10 @@ The service components can be deployed to Azure using the Azure Resource Manager
 2. Create the **Azure Cosmos DB** Account
 3. Create the **Azure Function** Application and configure the connection strings in the application settings 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/<put github link here>" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fgaming-in-editor-telemetry%2Fmaster%2FDeployment%2Ftelemetry_server.deployment.json" target="_blank">
     <img src="https://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=<put github link here>" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fgaming-in-editor-telemetry%2Fmaster%2FDeployment%2Ftelemetry_server.deployment.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
