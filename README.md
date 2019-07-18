@@ -13,7 +13,7 @@ azureDeploy: https://raw.githubusercontent.com/Azure-Samples/gaming-in-editor-te
 <link rel="stylesheet" type="text/css" media="all" href="Documentation/style/styles.css" />
 
 # Introduction 
-This is an example of how a developer could implement an in-editor telemetry visualization solution for their game.  In fact, we developed an Unreal Engine 4 [Plugin](https://aka.ms/UE4TelemetryPlugin) using this sample as its backend. While our plugin is made for [Unreal Engine 4](https://www.unrealengine.com/en-US/what-is-unreal-engine-4), the service component is game engine agnostic.
+This is an example of how a developer could implement an in-editor telemetry visualization solution for their game.  In fact, we developed an Unreal Engine 4 [Plugin](https://aka.ms/UE4TelemetryPlugin) and Unity [Plugin](https://aka.ms/UnityTelemetryPlugin) using this sample as its backend. The service component is game engine agnostic.
 
 ![In Editor Telemetry Visualization](Documentation/img/points.png)
 
@@ -58,6 +58,9 @@ The service components can be deployed to Azure using the Azure Resource Manager
 
 ### Telemetry Service
 1. [.NET Core 2.2 SDK](https://dotnet.microsoft.com/download/dotnet-core/2.2)
+
+# Calculate Cost Estimates
+A cost calculation guide is available [here](GTCost_Instructions.md)
 
 # Build and Test
 ___Note: Even if you run it locally, you must still have deployed the azure resources.  There is currently no local emulator for Event Hub.___
