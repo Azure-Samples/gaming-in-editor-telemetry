@@ -3,16 +3,20 @@ page_type: sample
 languages:
   - csharp
 products:
+  - dotnet
   - azure
   - azure-event-hubs
   - azure-functions
   - azure-cosmos-db
 azureDeploy: https://raw.githubusercontent.com/Azure-Samples/gaming-in-editor-telemetry/master/Deployment/telemetry_server.deployment.json
+name: "In-editor game telemetry visualization"
+description: "This is an example of how a developer could implement an in-editor telemetry visualization solution for their game."
 ---
 
 <link rel="stylesheet" type="text/css" media="all" href="Documentation/style/styles.css" />
 
 # Introduction 
+
 This is an example of how a developer could implement an in-editor telemetry visualization solution for their game.  In fact, we developed an Unreal Engine 4 [Plugin](https://aka.ms/UE4TelemetryPlugin) and Unity [Plugin](https://aka.ms/UnityTelemetryPlugin) using this sample as its backend. The service component is game engine agnostic.
 
 ![In Editor Telemetry Visualization](Documentation/img/points.png)
