@@ -18,7 +18,7 @@ description: "This is an example of how a developer could implement an in-editor
 
 # Introduction 
 
-This is an example of how a developer could implement an in-editor telemetry visualization solution for their game.  In fact, we developed an Unreal Engine 4 [Plugin](https://aka.ms/UE4TelemetryPlugin) and Unity [Plugin](https://aka.ms/UnityTelemetryPlugin) using this sample as its backend. The service component is game engine agnostic.
+This is an example of how a developer could implement an in-editor telemetry visualization solution for their game.  In fact, we developed an Unreal Engine 4 [Plugin](https://github.com/microsoft/UE4TelemetryVisualizer/) and Unity [Plugin](https://github.com/Microsoft/UnityTelemetryVisualizer) using this sample as its backend. The service component is game engine agnostic.
 
 ![In Editor Telemetry Visualization](Documentation/img/points.png)
 
