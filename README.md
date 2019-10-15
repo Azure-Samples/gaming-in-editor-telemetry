@@ -26,7 +26,8 @@ It utilizes **Azure Functions** to implement an API to ingest, process, and quer
 
 ![Telemetry Service Data Flow](Documentation/img/TelemetryServiceDataFlow.png)
 
-# Getting Started
+## Getting Started
+
 1.	Installation process
 
 The service components can be deployed to Azure using the Azure Resource Manager (**ARM**) template.  It will
@@ -92,7 +93,7 @@ ___It is recommended that you use "UseDevelopmentStorage=true" for the following
 
 Included with the project are two console apps for testing the service.
 
-# Publishing the code
+## Publishing the code
 1. Right-click the project name in Visual Studio and choose Publish
 2. Create a **New profile**
 3. Under Azure App Servce, choose **Select Existing** and then click the **Create Profile** button
