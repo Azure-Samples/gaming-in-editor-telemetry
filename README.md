@@ -43,6 +43,7 @@ The service components can be deployed to Azure using the Azure Resource Manager
 </a>
 
 ## Guidelines for filling out the parameters
+
 * [Cosmos DB Account Name](https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-manage-database-account#create-a-database-account): Must be all lower case, 3-31 characters (letters, numbers and hyphens allowed)
   * __Note: If the name contains invalid characters, the deployment will fail__
 
@@ -58,18 +59,21 @@ The service components can be deployed to Azure using the Azure Resource Manager
 * __Storage Account Type__: This is the storage used by the Function App itself.  Standard Locally Redundant Storage (LRS) should be fine in most cases. 
 
 ##	Software dependencies
-### Recommended Software
-1. [Visual Studio 2017 or later](https://visualstudio.microsoft.com/downloads/) 
 
+### Recommended Software
+
+1. [Visual Studio 2017 or later](https://visualstudio.microsoft.com/downloads/) 
 
 ### Telemetry Service
 1. [.NET Core 2.2 SDK](https://dotnet.microsoft.com/download/dotnet-core/2.2)
 
-# Calculate Cost Estimates
+## Calculate Cost Estimates
 A cost calculation guide is available [here](GTCost_Instructions.md)
 
-# Build and Test
+## Build and Test
+
 ___Note: Even if you run it locally, you must still have deployed the azure resources.  There is currently no local emulator for Event Hub.___
+
 ## Telemetry Service
 To run locally, you will need a ```local.settings.json``` file in the ```TelemetryAPI/``` project folder.  This is not checked in to source control because it often contains sensitive information.  The instructions below explain how to generate this file from the settings on the server.
 ### Visual Studio Users
