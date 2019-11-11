@@ -14,8 +14,6 @@ urlFragment: in-editor-telemetry-visualization
 description: "This is an example of how a developer could implement an in-editor telemetry visualization solution for their game."
 ---
 
-<link rel="stylesheet" type="text/css" media="all" href="Documentation/style/styles.css" />
-
 # Introduction 
 
 This is an example of how a developer could implement an in-editor telemetry visualization solution for their game.  In fact, we developed an Unreal Engine 4 [Plugin](https://github.com/microsoft/UE4TelemetryVisualizer/) and Unity [Plugin](https://github.com/Microsoft/UnityTelemetryVisualizer) using this sample as its backend. The service component is game engine agnostic.
