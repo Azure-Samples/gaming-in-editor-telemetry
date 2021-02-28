@@ -18,7 +18,7 @@ namespace TelemetryAPI
     {
         static readonly DocumentClient _client = new DocumentClient(new Uri(Environment.GetEnvironmentVariable("CosmosDbUri")), Environment.GetEnvironmentVariable("CosmosDbAuthKey"));
         static readonly FeedOptions feedOptions = new FeedOptions() { MaxItemCount = 30000, EnableCrossPartitionQuery = true };
-        static readonly string _collection = Environment.GetEnvironmentVariable("CosmosDataCollection") ?? "SimpleEvents";
+        static readonly string _collection = Environment.GetEnvironmentVariable("CosmosDataCollection") ?? "MyGame";
         static readonly string _database = Environment.GetEnvironmentVariable("CosmosDatabaseId") ?? "TelemetryDB";
 
         [FunctionName("CosmosReader")]

@@ -1,5 +1,5 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "cosmosDBAccountName": {
@@ -109,7 +109,6 @@
         "functionName": "[parameters('functionAppName')]",
         "hostingPlanName": "[parameters('functionAppName')]",
         "cosmosResourceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDBAccountName'))]",
-        "cosmosApiVersion": "[providers('Microsoft.DocumentDB', 'databaseAccounts').apiVersions[0]]",
         "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
         "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "functionWorkerRuntime": "[parameters('functionAppRuntime')]",
@@ -118,7 +117,7 @@
 
     },
     "resources": [{
-            "apiVersion": "2015-04-08",
+            "apiVersion": "2020-04-01",
             "kind": "GlobalDocumentDB",
             "type": "Microsoft.DocumentDB/databaseAccounts",
             "name": "[variables('cosmosAccountName')]",
@@ -126,32 +125,63 @@
             "properties": {
                 "databaseAccountOfferType": "Standard",
                 "locations": [{
-                    "id": "[concat(parameters('cosmosDBAccountName'), '-', parameters('location'))]",
                     "failoverPriority": 0,
                     "locationName": "[parameters('location')]"
-                }],
-                "enableMultipleWriteLocations": false,
-                "isVirtualNetworkFilterEnabled": false,
-                "virtualNetworkRules": [],
-                "ipRangeFilter": "",
-                "dependsOn": []
+                }]
             },
             "tags": {}
         },
-	{
-	    "apiVersion": "2017-05-10",
-	    "name": "pid-e2217eb2-aaf8-4564-af9a-9641e3fac962",
-	    "comments": "GUID for tracking production pilot deployments intended for Gaming-In-Editor-Debugging.",
-	    "type": "Microsoft.Resources/deployments",
-	    "properties": {
-		"mode": "Incremental",
-		"template": {
-		    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-		    "contentVersion": "1.0.0.0",
-		   "resources": []
-		}
-	    }
-	},
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+            "name": "[concat(variables('cosmosAccountName'), '/', parameters('telemetryDatabaseName'))]",
+            "apiVersion": "2020-04-01",
+            "dependsOn": [ 
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName'))]" 
+            ],
+            "properties":{
+                "resource":{
+                    "id": "[parameters('telemetryDatabaseName')]"
+                },
+                "options": {}
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+            "name": "[concat(variables('cosmosAccountName'), '/', parameters('telemetryDatabaseName'), '/', parameters('telemetryCollectionName'))]",
+            "apiVersion": "2020-04-01",
+            "dependsOn": [ 
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('cosmosAccountName'), parameters('telemetryDatabaseName'))]" 
+            ],
+            "properties":
+            {
+                "resource":{
+                    "id":  "[parameters('telemetryCollectionName')]",
+                    "partitionKey": {
+                        "paths": [
+                            "/client_id"
+                        ],
+                        "kind": "Hash"
+                    }
+                },
+                "options": {
+                    "throughput": 400
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "pid-e2217eb2-aaf8-4564-af9a-9641e3fac962",
+            "comments": "GUID for tracking production pilot deployments intended for Gaming-In-Editor-Debugging.",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+            "mode": "Incremental",
+            "template": {
+                "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+            "resources": []
+            }
+            }
+        },
         {
             "apiVersion": "2017-04-01",
             "name": "[parameters('eventHubNamespaceName')]",
@@ -189,7 +219,7 @@
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
-            "apiVersion": "2016-12-01",
+            "apiVersion": "2019-06-01",
             "location": "[parameters('location')]",
             "kind": "Storage",
             "sku": {
@@ -198,7 +228,7 @@
         },
         {
             "type": "Microsoft.Web/serverfarms",
-            "apiVersion": "2015-04-01",
+            "apiVersion": "2018-02-01",
             "name": "[variables('hostingPlanName')]",
             "location": "[parameters('location')]",
             "properties": {
@@ -208,7 +238,7 @@
             }
         },
         {
-            "apiVersion": "2015-08-01",
+            "apiVersion": "2018-02-01",
             "type": "Microsoft.Web/sites",
             "name": "[variables('functionName')]",
             "location": "[parameters('location')]",
@@ -223,15 +253,15 @@
                 "siteConfig": {
                     "appSettings": [{
                             "name": "AzureWebJobsDashboard",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2019-06-01').key1)]"
                         },
                         {
                             "name": "AzureWebJobsStorage",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2019-06-01').key1)]"
                         },
                         {
                             "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2019-06-01').key1)]"
                         },
                         {
                             "name": "WEBSITE_CONTENTSHARE",
@@ -271,11 +301,11 @@
                         },
                         {
                             "name": "CosmosDbUri",
-                            "value": "[reference(variables('cosmosResourceId'), variables('cosmosApiVersion')).documentEndpoint]"
+                            "value": "[reference(variables('cosmosResourceId'), '2020-04-01').documentEndpoint]"
                         },
                         {
                             "name": "CosmosDbAuthKey",
-                            "value": "[listKeys(variables('cosmosResourceId'), variables('cosmosApiVersion')).primaryMasterKey]"
+                            "value": "[listKeys(variables('cosmosResourceId'), '2020-04-01').primaryMasterKey]"
                         },
                         {
                             "name": "CosmosDatabaseId",
@@ -287,7 +317,7 @@
                         },
 						{
                             "name": "CosmosDbConnectionString",
-                            "value": "[concat('AccountEndpoint=https://', parameters('cosmosDBAccountName'), '.documents.azure.com:443/;AccountKey=', listKeys(variables('cosmosResourceId'), variables('cosmosApiVersion')).primaryMasterKey, ';')]"
+                            "value": "[concat('AccountEndpoint=https://', parameters('cosmosDBAccountName'), '.documents.azure.com:443/;AccountKey=', listKeys(variables('cosmosResourceId'), '2020-04-01').primaryMasterKey, ';')]"
                         }
                     ]
                 }
@@ -305,15 +335,15 @@
         },
         "documentEndpoint": {
             "type": "string",
-            "value": "[reference(variables('cosmosResourceId'), variables('cosmosApiVersion')).documentEndpoint]"
+            "value": "[reference(variables('cosmosResourceId'), '2020-04-01').documentEndpoint]"
         },
         "accountKey": {
             "type": "string",
-            "value": "[listKeys(variables('cosmosResourceId'), variables('cosmosApiVersion')).primaryMasterKey]"
+            "value": "[listKeys(variables('cosmosResourceId'), '2020-04-01').primaryMasterKey]"
         },
         "cosmosConnectionString": {
             "type": "string",
-            "value": "[concat('AccountEndpoint=https://', parameters('cosmosDBAccountName'), '.documents.azure.com:443/;AccountKey=', listKeys(variables('cosmosResourceId'), variables('cosmosApiVersion')).primaryMasterKey, ';')]"
+            "value": "[concat('AccountEndpoint=https://', parameters('cosmosDBAccountName'), '.documents.azure.com:443/;AccountKey=', listKeys(variables('cosmosResourceId'), '2020-04-01').primaryMasterKey, ';')]"
         }
     }
 }
