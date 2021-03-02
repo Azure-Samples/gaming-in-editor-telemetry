@@ -1,35 +1,11 @@
 {
-  "version": "2.0",
-  "healthMonitor": {
-    "enabled": true,
-    "healthCheckInterval": "00:00:10",
-    "healthCheckWindow": "00:02:00",
-    "healthCheckThreshold": 6,
-    "counterThreshold": 0.80
-  },
-  "functionTimeout": "00:05:00",
-  "logging": {
-    "categoryFilter": {
-      "defaultLevel": "Information",
-      "categoryLevels": {
-        "Host": "verbose",
-        "Function": "verbose",
-        "Host.Aggregator": "verbose"
-      }
-    },
-    "aggregator": {
-      "batchSize": 2000,
-      "flushTimeout": "00:00:60"
-    },
-    "tracing": {
-      "consoleLevel": "verbose"
-    },
-    "extensions": {
-      "eventHubs": {
-        "maxBatchSize": 256,
-        "prefetchCount": 512,
-        "batchCheckpointFrequency": 1
-      }
+    "version": "2.0",
+    "logging": {
+        "applicationInsights": {
+            "samplingExcludedTypes": "Request",
+            "samplingSettings": {
+                "isEnabled": true
+            }
+        }
     }
-  }
 }

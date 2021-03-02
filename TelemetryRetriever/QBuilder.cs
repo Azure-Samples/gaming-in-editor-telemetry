@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-
 using TelemetryAPI.Query;
 using Newtonsoft.Json.Linq;
 

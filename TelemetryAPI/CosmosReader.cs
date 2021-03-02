@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -7,7 +7,9 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Cosmos;
+
+using System.Linq;
 using System.Diagnostics;
 using System.Collections.Generic;
 using TelemetryAPI.Query;
@@ -16,10 +18,8 @@ namespace TelemetryAPI
 {
     public static class CosmosReader
     {
-        static readonly DocumentClient _client = new DocumentClient(new Uri(Environment.GetEnvironmentVariable("CosmosDbUri")), Environment.GetEnvironmentVariable("CosmosDbAuthKey"));
-        static readonly FeedOptions feedOptions = new FeedOptions() { MaxItemCount = 30000, EnableCrossPartitionQuery = true };
-        static readonly string _collection = Environment.GetEnvironmentVariable("CosmosDataCollection") ?? "MyGame";
-        static readonly string _database = Environment.GetEnvironmentVariable("CosmosDatabaseId") ?? "TelemetryDB";
+        static CosmosClient cosmosClient = new CosmosClient(Config.CosmosDbUri, Config.CosmosDbAuthKey);
+        static Container container = cosmosClient.GetContainer(Config.CosmosDbId, Config.CosmosDbCollection);
 
         [FunctionName("CosmosReader")]
         public static async Task<IActionResult> Run(
@@ -36,7 +36,7 @@ namespace TelemetryAPI
 
                 if (req.Method == HttpMethods.Get)
                 {
-                    query = DoGet(take);
+                    query = await DoGet(take);
                 }
                 else
                 {
@@ -50,17 +50,39 @@ namespace TelemetryAPI
 
                 return new OkObjectResult(result);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 log.LogError(ex, "Error occurred when querying data.\n" + ex.StackTrace);
                 return new BadRequestResult();
             }
         }
 
-        private static List<SimpleEvent> DoGet(int take)
+        private static async Task<List<SimpleEvent>> DoGet(int take)
         {
-            return _client.CreateDocumentQuery<SimpleEvent>(UriFactory.CreateDocumentCollectionUri(_database, _collection), feedOptions)
-                    .OrderByDescending(a => a.ClientTimestamp).Take(take).ToList();
+            string query = $"SELECT TOP {take} * from c ORDER BY c.client_ts DESC";
+
+            FeedIterator<SimpleEvent> resultSet = container.GetItemQueryIterator<SimpleEvent>(
+                query,
+                requestOptions: new QueryRequestOptions()
+                {
+                    MaxItemCount = -1 //better perf using -1 for dynamic count
+                    //would be great to have /clientId value here for in-partition queries
+                    //PartitionKey = new PartitionKey("0316126682083") 
+                });
+
+            List<SimpleEvent> simpleEvents = new List<SimpleEvent>();
+
+            while (resultSet.HasMoreResults)
+            {
+                FeedResponse<SimpleEvent> response = await resultSet.ReadNextAsync();
+
+                foreach(SimpleEvent simpleEvent in response)
+                {
+                    simpleEvents.Add(simpleEvent);
+                }
+            }
+
+            return simpleEvents;
         }
 
         private static async Task<List<SimpleEvent>> DoPost(int take, HttpRequest req)
@@ -71,7 +93,31 @@ namespace TelemetryAPI
 
             var whereClause = new QueryParser(q, tableAlias).Parse();
 
-            return _client.CreateDocumentQuery<SimpleEvent>(UriFactory.CreateDocumentCollectionUri(_database, _collection), FormatQuery(tableAlias, whereClause, take), feedOptions).ToList();
+            string query = FormatQuery(tableAlias, whereClause, take);
+
+            FeedIterator<SimpleEvent> resultSet = container.GetItemQueryIterator<SimpleEvent>(
+                query,
+                requestOptions: new QueryRequestOptions()
+                {
+                    MaxItemCount = -1 //dynamic max count 
+                    //would be great to have /clientId value here
+                    //PartitionKey = new PartitionKey("0316126682083")
+                });
+
+            List<SimpleEvent> simpleEvents = new List<SimpleEvent>();
+
+            while (resultSet.HasMoreResults)
+            {
+                FeedResponse<SimpleEvent> response = await resultSet.ReadNextAsync();
+
+                foreach (SimpleEvent simpleEvent in response)
+                {
+                    simpleEvents.Add(simpleEvent);
+                }
+            }
+
+            return simpleEvents;
+
         }
 
         private static string FormatQuery(string tableAlias, string whereClause, int limit = 10000)

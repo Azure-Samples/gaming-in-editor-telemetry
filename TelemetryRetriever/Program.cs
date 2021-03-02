@@ -2,7 +2,6 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Net;
-
 using TelemetryAPI.Query;
 
 namespace TelemetryRetriever

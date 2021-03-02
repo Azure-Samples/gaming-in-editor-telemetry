@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -21,7 +21,7 @@ namespace TelemetryAPI
     public static class Ingest
     {
         // The version of the algorithms used in this function - increment if something gets changed
-        const string INGEST_VERSION = "1.0.0"; 
+        const string INGEST_VERSION = "1.0.0";
 
         // The version of the payload being pushed into event hub - increment if something is changed so downstream functions can detect
         const string PAYLOAD_VERSION = "1.0.0";
@@ -33,13 +33,13 @@ namespace TelemetryAPI
 
         [FunctionName("ingest")]
         public static async Task<HttpResponseMessage> Run(
-            [HttpTrigger(AuthorizationLevel.Function, 
-            "post", 
+            [HttpTrigger(AuthorizationLevel.Function,
+            "post",
             Route = null)] HttpRequestMessage req,
             [EventHub(
                 "", // Not used if the name is in the connection string
                 Connection = Config.EventHubConnectionStringConfigField)] ICollector<EventData> messages,
-            ILogger log, 
+            ILogger log,
             ExecutionContext context)
         {
             using (var payload = BufferUtils.GetStream())

@@ -1,30 +1,25 @@
-using Microsoft.Azure.EventHubs;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Azure.EventHubs;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Cosmos;
 using TelemetryAPI.Utility;
+using Newtonsoft.Json;
 
 namespace TelemetryAPI
 {
     public static class CosmosSender
     {
+        static CosmosClient cosmosClient = new CosmosClient(Config.CosmosDbUri, Config.CosmosDbAuthKey);
+        static Container container = cosmosClient.GetContainer(Config.CosmosDbId, Config.CosmosDbCollection);
+
         [FunctionName("CosmosSender")]
         public static async Task Run(
-            // NOTE: If value is formatted as an '%environmentVariable%', then it will read the value at runtime
-            [EventHubTrigger(
-                "", // Not used if the name is in the connection string
-                Connection = Config.EventHubConnectionStringConfigField, 
-                ConsumerGroup = Config.ConsumerGroupEnvironmentVariable)] EventData[] messages,
-            [CosmosDB(
-                databaseName: Config.CosmosDbIdEnvironmentVariable,
-                collectionName: Config.CosmosDbCollectionEnvironmentVariable,
-                CreateIfNotExists = true,
-                ConnectionStringSetting = Config.CosmosDbConnectionStringConfigField,
-                PartitionKey = "/client_id",
-                UseMultipleWriteLocations = false)] IAsyncCollector<string> collector,
-            ILogger log)
+            [EventHubTrigger("", 
+            Connection = Config.EventHubConnectionStringConfigField,
+            ConsumerGroup = Config.ConsumerGroupEnvironmentVariable),] EventData[] messages, ILogger log)
         {
             foreach (var message in messages)
             {
@@ -48,7 +43,10 @@ namespace TelemetryAPI
 
                         try
                         {
-                            await collector.AddAsync(line);
+                            //await collector.AddAsync(line);
+
+                            SimpleEvent simpleEvent = JsonConvert.DeserializeObject<SimpleEvent>(line);
+                            await container.CreateItemAsync<SimpleEvent>(simpleEvent, new PartitionKey(simpleEvent.ClientId));
                         }
                         catch (Exception ex)
                         {
