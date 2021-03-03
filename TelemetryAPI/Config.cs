@@ -33,7 +33,7 @@ namespace TelemetryAPI
         /// Used by the Event Hub Trigger Attribute.
         /// </summary>
         public const string CosmosDbCollectionEnvironmentVariable = "%CosmosDataCollection%";
-        
+
         /// <summary>
         /// Uri for access to Cosmos DB ( https://<accountid>.documents.azure.com:443/ )
         /// </summary>

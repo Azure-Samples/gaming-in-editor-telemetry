@@ -47,7 +47,7 @@ namespace TelemetryEmitter
 
         static string CreateBatch(SimpleEventHeader header, params SimpleEvent[] events)
         {
-            return JsonConvert.SerializeObject(new { Header = header, Events = events }, _jsonSettings) ;
+            return JsonConvert.SerializeObject(new { Header = header, Events = events }, _jsonSettings);
         }
 
         static SimpleEventHeader CreateHeader()
@@ -72,7 +72,7 @@ namespace TelemetryEmitter
 
         static void PostTelemetry(string data)
         {
-            
+
             _webClient.UploadString(INGEST_URL, data);
         }
 

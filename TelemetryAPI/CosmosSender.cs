@@ -1,30 +1,38 @@
-using Microsoft.Azure.EventHubs;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Azure.EventHubs;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Cosmos;
 using TelemetryAPI.Utility;
+using Newtonsoft.Json;
 
 namespace TelemetryAPI
 {
     public static class CosmosSender
     {
+        static readonly string _cosmosUri = Config.CosmosDbUri;
+        static readonly string _authKey = Config.CosmosDbAuthKey;
+        static readonly string _databaseId = Config.CosmosDbId;
+        static readonly string _containerId = Config.CosmosDbCollection;
+
+        static CosmosClient _cosmosClient = new CosmosClient(
+            _cosmosUri,
+            _authKey,
+            new CosmosClientOptions
+            {
+                //bulk mode to better saturate throughput for high volume writes
+                AllowBulkExecution = true
+            });
+        
+        static Container _container = _cosmosClient.GetContainer(_databaseId, _containerId);
+
         [FunctionName("CosmosSender")]
         public static async Task Run(
-            // NOTE: If value is formatted as an '%environmentVariable%', then it will read the value at runtime
-            [EventHubTrigger(
-                "", // Not used if the name is in the connection string
-                Connection = Config.EventHubConnectionStringConfigField, 
-                ConsumerGroup = Config.ConsumerGroupEnvironmentVariable)] EventData[] messages,
-            [CosmosDB(
-                databaseName: Config.CosmosDbIdEnvironmentVariable,
-                collectionName: Config.CosmosDbCollectionEnvironmentVariable,
-                CreateIfNotExists = true,
-                ConnectionStringSetting = Config.CosmosDbConnectionStringConfigField,
-                PartitionKey = "/client_id",
-                UseMultipleWriteLocations = false)] IAsyncCollector<string> collector,
-            ILogger log)
+            [EventHubTrigger("", 
+            Connection = Config.EventHubConnectionStringConfigField,
+            ConsumerGroup = Config.ConsumerGroupEnvironmentVariable),] EventData[] messages, ILogger log)
         {
             foreach (var message in messages)
             {
@@ -48,7 +56,17 @@ namespace TelemetryAPI
 
                         try
                         {
-                            await collector.AddAsync(line);
+                            
+                            SimpleEvent simpleEvent = JsonConvert.DeserializeObject<SimpleEvent>(line);
+
+                            await _container.CreateItemAsync<SimpleEvent>(
+                                simpleEvent, 
+                                new PartitionKey(simpleEvent.ClientId),
+                                new ItemRequestOptions
+                                {
+                                    //optimize bandwidth for high write volume
+                                    EnableContentResponseOnWrite = false
+                                });
                         }
                         catch (Exception ex)
                         {
