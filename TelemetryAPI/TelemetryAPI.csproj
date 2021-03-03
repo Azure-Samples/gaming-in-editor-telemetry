@@ -4,9 +4,6 @@
     <AzureFunctionsVersion>v3</AzureFunctionsVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Content Remove="C:\Users\mjbrown\.nuget\packages\microsoft.azure.cosmos\3.16.0\contentFiles\any\netstandard2.0\ThirdPartyNotice.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.16.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.EventHubs" Version="4.1.1" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="1.4.0" />

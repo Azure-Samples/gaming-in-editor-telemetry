@@ -18,8 +18,12 @@ namespace TelemetryAPI
 {
     public static class CosmosReader
     {
-        static CosmosClient cosmosClient = new CosmosClient(Config.CosmosDbUri, Config.CosmosDbAuthKey);
-        static Container container = cosmosClient.GetContainer(Config.CosmosDbId, Config.CosmosDbCollection);
+        static readonly string _cosmosUri = Config.CosmosDbUri;
+        static readonly string _authKey = Config.CosmosDbAuthKey;
+        static readonly string _databaseId = Config.CosmosDbId;
+        static readonly string _containerId = Config.CosmosDbCollection;
+        static CosmosClient _cosmosClient = new CosmosClient(_cosmosUri, _authKey);
+        static Container _container = _cosmosClient.GetContainer(_databaseId, _containerId);
 
         [FunctionName("CosmosReader")]
         public static async Task<IActionResult> Run(
@@ -61,13 +65,14 @@ namespace TelemetryAPI
         {
             string query = $"SELECT TOP {take} * from c ORDER BY c.client_ts DESC";
 
-            FeedIterator<SimpleEvent> resultSet = container.GetItemQueryIterator<SimpleEvent>(
+            FeedIterator<SimpleEvent> resultSet = _container.GetItemQueryIterator<SimpleEvent>(
                 query,
                 requestOptions: new QueryRequestOptions()
                 {
-                    MaxItemCount = -1 //better perf using -1 for dynamic count
-                    //would be great to have /clientId value here for in-partition queries
-                    //PartitionKey = new PartitionKey("0316126682083") 
+                    //these options can be tuned to improve performance for 
+                    //cross-partitioned queries for very large queries
+                    MaxBufferedItemCount = -1,
+                    MaxConcurrency = -1
                 });
 
             List<SimpleEvent> simpleEvents = new List<SimpleEvent>();
@@ -95,13 +100,14 @@ namespace TelemetryAPI
 
             string query = FormatQuery(tableAlias, whereClause, take);
 
-            FeedIterator<SimpleEvent> resultSet = container.GetItemQueryIterator<SimpleEvent>(
+            FeedIterator<SimpleEvent> resultSet = _container.GetItemQueryIterator<SimpleEvent>(
                 query,
                 requestOptions: new QueryRequestOptions()
                 {
-                    MaxItemCount = -1 //dynamic max count 
-                    //would be great to have /clientId value here
-                    //PartitionKey = new PartitionKey("0316126682083")
+                    //these options can be tuned to improve performance for 
+                    //cross-partitioned queries for very large queries
+                    MaxBufferedItemCount = -1,
+                    MaxConcurrency = -1
                 });
 
             List<SimpleEvent> simpleEvents = new List<SimpleEvent>();
