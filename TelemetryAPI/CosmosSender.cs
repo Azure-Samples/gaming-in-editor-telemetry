@@ -1,4 +1,4 @@
-using Microsoft.Azure.EventHubs;
+using Azure.Messaging.EventHubs;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using System;
@@ -19,20 +19,19 @@ namespace TelemetryAPI
                 ConsumerGroup = Config.ConsumerGroupEnvironmentVariable)] EventData[] messages,
             [CosmosDB(
                 databaseName: Config.CosmosDbIdEnvironmentVariable,
-                collectionName: Config.CosmosDbCollectionEnvironmentVariable,
+                containerName: Config.CosmosDbCollectionEnvironmentVariable,
                 CreateIfNotExists = true,
-                ConnectionStringSetting = Config.CosmosDbConnectionStringConfigField,
-                PartitionKey = "/client_id",
-                UseMultipleWriteLocations = false)] IAsyncCollector<string> collector,
+                Connection = Config.CosmosDbConnectionStringConfigField,
+                PartitionKey = "/client_id")] IAsyncCollector<string> collector,
             ILogger log)
         {
             foreach (var message in messages)
             {
-                byte[] payload = message.Body.Array;
+                byte[] payload = message.EventBody.ToArray();
 
                 if (message.IsGzipCompressed())
                 {
-                    payload = await BufferUtils.GzipDecompressToArray(message.Body.Array);
+                    payload = await BufferUtils.GzipDecompressToArray(message.EventBody.ToArray());
                 }
 
                 // Payload is expected to be a JSONL (one line per json record) formatted body

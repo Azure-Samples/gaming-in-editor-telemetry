@@ -1,4 +1,4 @@
-﻿using Microsoft.Azure.EventHubs;
+﻿using Azure.Messaging.EventHubs;
 
 namespace TelemetryAPI.Utility
 {
