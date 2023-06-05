@@ -16,7 +16,7 @@ description: "This is an example of how a developer could implement an in-editor
 
 # Introduction 
 
-This is an example of how a developer could implement an in-editor telemetry visualization solution for their game.  In fact, we developed an Unreal Engine 4 [Plugin](https://github.com/microsoft/UE4TelemetryVisualizer/) and Unity [Plugin](https://github.com/Microsoft/UnityTelemetryVisualizer) using this sample as its backend. The service component is game engine agnostic.
+This is an example of how a developer could implement an in-editor telemetry visualization solution for their game.  In fact, we developed an [Unreal Engine Plugin](https://github.com/microsoft/UE4TelemetryVisualizer/) and [Unity Plugin](https://github.com/Microsoft/UnityTelemetryVisualizer) using this sample as its backend. The service component is game engine agnostic.
 
 ![In Editor Telemetry Visualization](Documentation/img/points.png)
 
@@ -24,23 +24,14 @@ It utilizes **Azure Functions** to implement an API to ingest, process, and quer
 
 ![Telemetry Service Data Flow](Documentation/img/TelemetryServiceDataFlow.png)
 
-## Getting Started
+## Deployment Process
 
-1.	Installation process
-
-The service components can be deployed to Azure using the Azure Resource Manager (**ARM**) template.  It will
+The service components can be deployed to Azure using the [Azure Resource Manager (**ARM**) template](https://aka.ms/arm-gaming-in-editor-telemetry).  It will:
 1. Create the **Azure Event Hub** Namespace and Event Hub
 2. Create the **Azure Cosmos DB** Account
-3. Create the **Azure Function** Application and configure the connection strings in the application settings 
+3. Create the **Azure Function** Application and configure the connection strings in the application settings
 
-<a href="https://aka.ms/arm-gaming-in-editor-telemetry" target="_blank">
-    <img src="https://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fgaming-in-editor-telemetry%2Fmaster%2FDeployment%2Ftelemetry_server.deployment.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
-
-## Guidelines for filling out the parameters
+### Guidelines for filling out the parameters
 
 * [Cosmos DB Account Name](https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-manage-database-account#create-a-database-account): Must be all lower case, 3-31 characters (letters, numbers and hyphens allowed)
   * __Note: If the name contains invalid characters, the deployment will fail__
@@ -58,12 +49,8 @@ The service components can be deployed to Azure using the Azure Resource Manager
 
 ##	Software dependencies
 
-### Recommended Software
-
-1. [Visual Studio 2017 or later](https://visualstudio.microsoft.com/downloads/) 
-
-### Telemetry Service
-1. [.NET Core 2.2 SDK](https://dotnet.microsoft.com/download/dotnet-core/2.2)
+1. [Visual Studio 2022 or later](https://visualstudio.microsoft.com/downloads/) 
+2. [.NET 6.0](https://dotnet.microsoft.com/download/dotnet/6.0)
 
 ## Calculate Cost Estimates
 A cost calculation guide is available [here](GTCost_Instructions.md)
@@ -72,7 +59,7 @@ A cost calculation guide is available [here](GTCost_Instructions.md)
 
 ___Note: Even if you run it locally, you must still have deployed the azure resources.  There is currently no local emulator for Event Hub.___
 
-## Telemetry Service
+### Telemetry Service
 To run locally, you will need a ```local.settings.json``` file in the ```TelemetryAPI/``` project folder.  This is not checked in to source control because it often contains sensitive information.  The instructions below explain how to generate this file from the settings on the server.
 ### Visual Studio Users
 1. Set up the publish profile as described in the [Azure Documentation*](https://docs.microsoft.com/en-us/azure/azure-functions/functions-develop-vs#publish-to-azure)
@@ -96,17 +83,21 @@ ___It is recommended that you use "UseDevelopmentStorage=true" for the following
 Included with the project are two console apps for testing the service.
 
 ## Publishing the code
-1. Right-click the project name in Visual Studio and choose Publish
+1. Right-click the *TelemetryAPI* project in Visual Studio and choose 'Publish'
 2. Create a **New profile**
-3. Under Azure App Servce, choose **Select Existing** and then click the **Create Profile** button
-4. Locate the Azure Function App you created with the template and Click **OK**
-5. Click **Publish**
+3. Set 'Target' to **Azure**, select 'Next'
+4. Set 'Specific target' to **Azure Function App**, select 'Next'
+5. Under 'Functions instance', locate the Azure Function App you created with the template, select 'Next'
+6. Set 'Deployment type' to **Publish**, select 'Finish'
+7. The project should build and will be packaged into a .zip file for deployment. Select 'Close' and then click the 'Publish' button to deploy.
+8. The first time you publish to your *Functions App*, you may be asked to update the Functions version on Azure, select 'Yes'.
+If you miss this step, you can change the settings in Azure by navigating to your *Function App*, select Configuration > FUNCTIONS_EXTENSION_VERSION, set the 'Value' to **~4** and press 'OK'.
 
 ## Locating your Authorization Key
 [Azure Documentation For Authorization Keys](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook#authorization-keys)
 1. Open the Azure Portal in your browser
 2. Locate your *Function App* under **All Resources**
-3. Choose **Function App Settings** from the *Overview* tab
+3. Choose **App keys** under the *Functions* section
 4. Copy the value of the *default* key, or create a new key for your use
 
 Test your deployment with the TelemetryEmitter by changing the line:
