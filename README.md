@@ -83,12 +83,15 @@ ___It is recommended that you use "UseDevelopmentStorage=true" for the following
 Included with the project are two console apps for testing the service.
 
 ## Publishing the code
-1. Right-click the TelemetryAPI project in Visual Studio and choose Publish
+1. Right-click the *TelemetryAPI* project in Visual Studio and choose 'Publish'
 2. Create a **New profile**
-3. Set 'Target' to **Azure** > Next
-4. Set 'Specific target' to **Azure Function App** > Next
-3. Under 'Functions instance', locate the Azure Function App you created with the template > Next
-5. Set 'Deployment type' to **Publish** > Finish
+3. Set 'Target' to **Azure**, select 'Next'
+4. Set 'Specific target' to **Azure Function App**, select 'Next'
+5. Under 'Functions instance', locate the Azure Function App you created with the template, select 'Next'
+6. Set 'Deployment type' to **Publish**, select 'Finish'
+7. The project should build and will be packaged into a .zip file for deployment. Select 'Close' and then click the 'Publish' button to deploy.
+8. The first time you publish to your *Functions App*, you may be asked to update the Functions version on Azure, select 'Yes'.
+If you miss this step, you can change the settings in Azure by navigating to your *Function App*, select Configuration > FUNCTIONS_EXTENSION_VERSION, set the 'Value' to **~4** and press 'OK'.
 
 ## Locating your Authorization Key
 [Azure Documentation For Authorization Keys](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook#authorization-keys)
